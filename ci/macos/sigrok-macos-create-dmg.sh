@@ -125,6 +125,16 @@ xsltproc --stringparam VERSION "${ARTIFACT_VERSION}" -o $CONTENTS_DIR/Info.plist
 	../contrib-macos/Info-${ARTIFACT_BIN_NAME}.xslt ../contrib-macos/Info-${ARTIFACT_BIN_NAME}.plist
 cp ../contrib-macos/${ARTIFACT_BIN_NAME}.icns $CONTENTS_DIR/Resources
 
+# workaround: move two components out of app to avoid codesign fails
+mv $ARTIFACT_TITLE.app/Frameworks/Python.framework ./
+mv $ARTIFACT_TITLE.app/Frameworks/QtDBus.framework ./
+
+# sign the app
+codesign --force --deep --sign - $ARTIFACT_TITLE.app
+
+# send them back
+mv ./Python.framework ./QtDBus.framework $$ARTIFACT_TITLE.app
+
 hdiutil create "${ARTIFACT_TITLE}-${ARTIFACT_VERSION}-${TARGET}.dmg" \
 	-volname "$ARTIFACT_TITLE $ARTIFACT_VERSION" \
 	-fs HFS+ -srcfolder "$ARTIFACT_TITLE.app"
